@@ -1,0 +1,103 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hola-mundo
+  namespace: test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hola-mundo
+  template:
+    metadata:
+      labels:
+        app: hola-mundo
+    spec:
+      containers:
+      - name: hola-mundo
+        image: gcr.io/google-samples/hello-app:1.0
+        ports:
+        - containerPort: 8080
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hola-mundo
+  namespace: test
+spec:
+  ports:
+  - port: 80
+    targetPort: 8080
+  selector:
+    app: hola-mundo
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hola-mundo-nuevo
+  namespace: test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hola-mundo-nuevo
+  template:
+    metadata:
+      labels:
+        app: hola-mundo-nuevo
+    spec:
+      containers:
+      - name: hola-mundo-nuevo
+        image: gcr.io/google-samples/hello-app:2.0
+        ports:
+        - containerPort: 8080
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hola-mundo-nuevo
+  namespace: test
+spec:
+  ports:
+  - port: 80
+    targetPort: 8080
+  selector:
+    app: hola-mundo-nuevo
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: hola-mundo-routing
+  namespace: test
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - istio-system/ingressgateway
+  http:
+  - match:
+    - uri:
+        prefix: "/hola-mundo"
+    route:
+    - destination:
+        host: hola-mundo.test.svc.cluster.local
+        port:
+          number: 80
+  - match:
+    - uri:
+        prefix: "/hola-mundo-nuevo"
+    route:
+    - destination:
+        host: hola-mundo-nuevo.test.svc.cluster.local
+        port:
+          number: 80
