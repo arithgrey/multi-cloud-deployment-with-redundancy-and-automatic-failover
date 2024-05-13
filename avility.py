@@ -78,6 +78,8 @@ class KubectlApply:
             print(f"Manifiestos aplicados en el clúster '{name}'...")
             try:
                 subprocess.run(['kubectl', '--context', name, 'get', 'all', '-n', 'test'], check=True)
+                subprocess.run(['minikube', 'service', 'hola-mundo', '--profile', name, '-n', 'test', '--url'], check=True)
+                
             except subprocess.CalledProcessError as e:
                 print(f"Error al obtener recursos en el clúster '{name}': {e}")
 
