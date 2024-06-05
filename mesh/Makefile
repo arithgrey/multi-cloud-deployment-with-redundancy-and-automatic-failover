@@ -1,4 +1,4 @@
-cluster_name = gke_findep-calidad-uat-mx_us-central1_multi-k8s
+cluster_name = 
 name_space = devops
 
 
