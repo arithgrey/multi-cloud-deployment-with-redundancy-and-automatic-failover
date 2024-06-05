@@ -1,4 +1,4 @@
-cluster_name = 
+cluster_name = gke_findep-calidad-uat-mx_us-central1_multi-k8s
 name_space = devops
 
 
@@ -100,4 +100,7 @@ validate_mesh:
 	kubectl get virtualservice -n default
 	@echo "Se verifica que este recibiendo solicitudes"
 	kubectl logs -l app=istio-ingressgateway -n istio-system
-	
+
+apply-certificate:
+	@echo "Aplicando certificado ..."
+	kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.9.1/cert-manager.yaml
