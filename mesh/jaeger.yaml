@@ -1,0 +1,93 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: jaeger
+  namespace: istio-system
+  labels:
+    app: jaeger
+spec:
+  selector:
+    matchLabels:
+      app: jaeger
+  serviceName: jaeger        
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: jaeger
+        app.kubernetes.io/instance: jaeger
+        app: jaeger
+      annotations:
+        sidecar.istio.io/inject: "false"
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "14269"
+    spec:
+      containers:
+        - name: jaeger
+          image: "docker.io/jaegertracing/all-in-one:1.23"
+          env:
+            - name: BADGER_EPHEMERAL
+              value: "false"
+            - name: SPAN_STORAGE_TYPE
+              value: "badger"
+            - name: BADGER_DIRECTORY_VALUE
+              value: "/badger/data"
+            - name: BADGER_DIRECTORY_KEY
+              value: "/badger/key"
+            - name: COLLECTOR_ZIPKIN_HOST_PORT
+              value: ":9411"
+            - name: MEMORY_MAX_TRACES
+              value: "50000"
+            - name: QUERY_BASE_PATH
+              value: /jaeger
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 14269
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 14269
+          volumeMounts:
+            - name: data
+              mountPath: /badger
+          resources:
+            requests:
+              cpu: 100m
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        annotations:
+          volume.beta.kubernetes.io/storage-class: "mesh-storage-hdd"
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 20Gi         
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: tracing-vs
+  namespace: istio-system
+spec:
+  hosts:
+  - "tracing.${MESH_DOMAIN}"
+  gateways:
+  - istio-system/mesh-gateway
+  http:
+  - route:
+    - destination:
+        host: tracing
+        port:
+          number: 80
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: tracing
+  namespace: istio-system
+spec:
+  host: tracing
+  trafficPolicy:
+    tls:
+      mode: DISABLE
