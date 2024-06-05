@@ -1,0 +1,12 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: mesh-certificate
+  namespace: istio-system
+spec:
+  secretName: secret-mesh-certificate
+  issuerRef:
+    name: letsencrypt-staging
+  dnsNames:
+  - 'tu-dominio.com'
+  - '*.tu-dominio'
